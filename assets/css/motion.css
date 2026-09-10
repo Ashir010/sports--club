@@ -1,0 +1,355 @@
+/* ==========================================================================
+   TOSS CLUB — Scroll
+   --------------------------------------------------------------------------
+   Smooth inertial scrolling (Lenis), a chapter rail down the right edge,
+   clip-path unmasking, scroll-linked parallax on the court art, the sports
+   story stage, and the cursor label over openable media.
+
+   Everything here is additive: with JavaScript off, or with reduced motion
+   requested, the page falls back to ordinary native scrolling with no
+   hidden content.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Lenis — the rules the library needs on the document itself.
+   -------------------------------------------------------------------------- */
+
+html.lenis,
+html.lenis body { height: auto; }
+
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+.lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
+.lenis.lenis-stopped body { overflow: hidden; }
+.lenis.lenis-smooth iframe { pointer-events: none; }
+
+/* The native bar goes; the chapter rail and the top line report position. */
+html.lenis { scrollbar-width: none; }
+html.lenis::-webkit-scrollbar { display: none; }
+
+/* --------------------------------------------------------------------------
+   Unmask — the signature arrival. Content is revealed by lifting a mask from
+   the bottom edge rather than sliding in, so the frame stays put and only
+   the picture appears.
+   -------------------------------------------------------------------------- */
+
+.unmask {
+  --unmask-r: 0px;
+  clip-path: inset(0 0 101% 0 round var(--unmask-r));
+  transition: clip-path 1150ms var(--e-out);
+  will-change: clip-path;
+}
+.unmask.is-in { clip-path: inset(0 0 0 0 round var(--unmask-r)); }
+
+.unmask--lg { --unmask-r: var(--r-lg); }
+.unmask--sm { --unmask-r: var(--r-sm); }
+.unmask--md { --unmask-r: var(--r-md); }
+
+/* Staggered arrival for a run of tiles. Each tile is still watched on its
+   own, so nothing unmasks before it is actually on screen. */
+.unmask.is-in[data-delay="1"] { transition-delay: 90ms; }
+.unmask.is-in[data-delay="2"] { transition-delay: 180ms; }
+.unmask.is-in[data-delay="3"] { transition-delay: 270ms; }
+
+/* --------------------------------------------------------------------------
+   Parallax — the drawing drifts inside its frame as the frame passes. The
+   art is oversized so the drift never exposes an edge.
+   -------------------------------------------------------------------------- */
+
+.plate__art {
+  transform: translate3d(0, var(--py, 0px), 0) scale(1.14);
+  will-change: transform;
+}
+
+/* --------------------------------------------------------------------------
+   Chapter rail — where you are in the club, and a way to jump.
+   -------------------------------------------------------------------------- */
+
+.railnav {
+  position: fixed;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 115;
+  display: none;
+  grid-auto-flow: row;
+  justify-items: center;
+  padding: var(--s-3) 0;
+}
+
+.railnav__track {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  margin-left: -0.5px;
+  background: var(--line);
+  overflow: hidden;
+}
+.railnav__fill {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 100%;
+  background: var(--optic);
+  transform: scaleY(var(--p, 0));
+  transform-origin: top center;
+}
+
+.railnav__dot {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+}
+.railnav__dot::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--line-strong);
+  transition: background var(--t-fast) var(--e-soft), transform var(--t-mid) var(--e-out);
+}
+.railnav__dot:hover::before { background: var(--bone); transform: scale(1.5); }
+.railnav__dot.is-on::before { background: var(--optic); transform: scale(1.8); }
+
+.railnav__label {
+  position: absolute;
+  right: calc(100% + 10px);
+  white-space: nowrap;
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  color: var(--bone);
+  background: rgba(6, 32, 28, 0.9);
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  padding: 4px var(--s-3);
+  opacity: 0;
+  transform: translateX(6px);
+  pointer-events: none;
+  transition: opacity var(--t-fast) var(--e-soft), transform var(--t-mid) var(--e-out);
+}
+.railnav__dot:hover .railnav__label,
+.railnav__dot:focus-visible .railnav__label { opacity: 1; transform: none; }
+
+/* Over a chalk chapter the rail inverts so it stays readable. */
+.railnav.is-onlight .railnav__track { background: var(--line-ink); }
+.railnav.is-onlight .railnav__fill { background: var(--ink); }
+.railnav.is-onlight .railnav__dot::before { background: var(--line-ink-strong); }
+.railnav.is-onlight .railnav__dot:hover::before { background: var(--ink); }
+.railnav.is-onlight .railnav__dot.is-on::before { background: var(--ink); }
+.railnav.is-onlight .railnav__label {
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.94);
+  border-color: var(--line-ink);
+}
+
+@media (min-width: 1200px) and (pointer: fine) {
+  .railnav { display: grid; }
+  /* With the rail present the top line is redundant. */
+  .progress { display: none; }
+}
+
+/* --------------------------------------------------------------------------
+   Sports story — a sticky stage on the left, chapters scrolling past on the
+   right. The court redraws as each sport comes up.
+   -------------------------------------------------------------------------- */
+
+.story__jump {
+  display: flex;
+  flex-wrap: nowrap;      /* one scrolling row, like every other filter rail */
+  gap: var(--s-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-bottom: var(--s-6);
+  padding-bottom: var(--s-2);
+}
+.story__jump::-webkit-scrollbar { display: none; }
+
+.story__grid { display: grid; gap: var(--s-6); }
+
+/* The column must stretch to the full height of the chapters beside it —
+   a sticky element can only travel inside its own parent's box, so a
+   shrink-to-fit grid item would leave the stage nothing to travel through. */
+.story__col { position: relative; }
+
+.story__stage {
+  position: sticky;
+  top: calc(var(--nav-h) + 16px);
+  display: grid;
+  gap: var(--s-4);
+}
+
+.story__plate {
+  position: relative;
+  aspect-ratio: 5 / 4;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  color: var(--line-strong);
+}
+
+/* Two layers crossfade so the court never blinks between sports. */
+.story__layer {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 620ms var(--e-soft);
+}
+.story__layer.is-on { opacity: 1; }
+
+.story__counter {
+  position: absolute;
+  z-index: 5;
+  left: var(--s-5);
+  top: var(--s-5);
+  font-size: var(--fs-micro);
+  font-weight: 700;
+  color: var(--bone);
+  background: rgba(4, 24, 21, 0.6);
+  backdrop-filter: blur(6px);
+  border-radius: var(--r-pill);
+  padding: 4px var(--s-3);
+}
+
+.story__ticker {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-4);
+  font-size: var(--fs-small);
+  color: var(--ash);
+}
+
+.story__steps { display: grid; }
+
+.story__step {
+  display: grid;
+  align-content: center;
+  gap: var(--s-5);
+  padding-block: var(--s-8);
+  opacity: 0.34;
+  transition: opacity 500ms var(--e-soft);
+}
+.story__step.is-live { opacity: 1; }
+
+.story__name {
+  font-size: clamp(2.1rem, 5vw, 3.6rem);
+  font-weight: 800;
+  font-stretch: 116%;
+  font-variation-settings: "wdth" 116, "wght" 800;
+  line-height: 0.96;
+  letter-spacing: -0.026em;
+  text-transform: uppercase;
+  color: var(--bone);
+}
+.story__step.is-live .story__name { color: var(--optic); }
+
+.story__blurb { font-size: var(--fs-lede); line-height: 1.5; color: var(--ash); max-width: 46ch; }
+
+.story__facts {
+  display: grid;
+  gap: 0;
+  border-top: 1px solid var(--line);
+}
+.story__fact {
+  display: grid;
+  grid-template-columns: minmax(110px, 0.45fr) minmax(0, 1fr);
+  gap: var(--s-4);
+  padding: var(--s-3) 0;
+  border-bottom: 1px solid var(--line);
+  font-size: var(--fs-small);
+}
+.story__fact dt { color: var(--ash-dim); }
+.story__fact dd { margin: 0; color: var(--bone); }
+
+.story__kit { display: grid; gap: var(--s-2); }
+.story__kitrow {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: var(--s-3);
+  font-size: var(--fs-small);
+  color: var(--ash);
+}
+.story__kitrow svg { width: 18px; height: 18px; margin-top: 3px; color: var(--optic); }
+
+.story__actions { display: flex; flex-wrap: wrap; gap: var(--s-3); }
+
+@media (min-width: 1024px) {
+  .story__grid {
+    grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
+    column-gap: clamp(40px, 5vw, 88px);
+    align-items: stretch;
+  }
+  .story__stage { top: calc(var(--nav-h) + 32px); }
+  .story__step { min-height: 84vh; padding-block: 0; }
+}
+
+/* Each chapter carries its own court for the stacked layout. */
+.story__stepart {
+  display: none;
+  position: relative;
+  aspect-ratio: 16 / 10;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  color: var(--line-strong);
+}
+
+/* On a phone a sticky stage would eat the screen, so the chapters simply
+   stack and each shows its own court. */
+@media (max-width: 1023px) {
+  .story__col { display: none; }
+  .story__stepart { display: block; }
+  .story__step { opacity: 1; }
+  .story__step + .story__step {
+    border-top: 1px solid var(--line);
+    margin-top: var(--s-6);
+    padding-top: var(--s-7);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Cursor label — a small disc that names the action over openable media.
+   Pointer devices only; it never carries information that is not also in
+   the element's accessible name.
+   -------------------------------------------------------------------------- */
+
+.cursorlabel {
+  position: fixed;
+  z-index: 180;
+  top: 0;
+  left: 0;
+  display: grid;
+  place-items: center;
+  width: 78px;
+  height: 78px;
+  margin: -39px 0 0 -39px;
+  border-radius: 50%;
+  background: var(--optic);
+  color: var(--pine);
+  font-size: var(--fs-micro);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate3d(var(--cx, 0), var(--cy, 0), 0) scale(0.5);
+  transition: opacity 220ms var(--e-soft), scale 320ms var(--e-out);
+  will-change: transform;
+}
+.cursorlabel.is-on { opacity: 1; scale: 1; }
+
+@media (pointer: coarse), (prefers-reduced-motion: reduce) {
+  .cursorlabel { display: none; }
+}
+
+/* --------------------------------------------------------------------------
+   Reduced motion — no inertia, no drift, nothing masked.
+   -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .unmask { clip-path: none !important; transition: none !important; }
+  .plate__art { transform: none; }
+  .story__step { opacity: 1; }
+  .story__layer { transition: none; }
+}

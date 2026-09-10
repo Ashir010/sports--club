@@ -1,0 +1,109 @@
+/* ==========================================================================
+   TOSS CLUB — Design tokens
+   Palette is derived from real court surfaces: pine-dark surround, chalk
+   line-marking, maple hardwood, optic-yellow ball. Never introduce a colour
+   outside this file; components consume variables only.
+   ========================================================================== */
+
+:root {
+  /* --- Ground ------------------------------------------------------------ */
+  --pine:            #06201C;   /* deepest court surround                    */
+  --pine-deep:       #041815;   /* footer / recessed                         */
+  --moss:            #0B2E28;   /* raised panel on dark                      */
+  --fern:            #134037;   /* hover / active panel on dark              */
+  --chalk:           #E8EBE2;   /* light chapter ground (mineral, not cream) */
+  --chalk-sunk:      #DCE0D4;   /* recessed panel on light                   */
+  --bone:            #F3F6EC;   /* primary text on dark                      */
+
+  /* --- Text -------------------------------------------------------------- */
+  --ash:             #9DAA9E;   /* secondary text on dark   — 6.7:1 on pine  */
+  --ash-dim:         #7B877B;   /* tertiary text on dark    — 4.7:1 on pine  */
+  --slate:           #45543F;   /* secondary text on chalk  — 6.9:1          */
+  --ink:             #0A2420;   /* primary text on chalk                     */
+
+  /* --- Accents ----------------------------------------------------------- */
+  --optic:           #D8F24B;   /* the ball. Signal + primary action only.   */
+  --optic-deep:      #B7D22F;
+  --optic-wash:      rgba(216, 242, 75, 0.12);
+  --maple:           #D9A441;   /* hardwood floors, membership warmth        */
+  --maple-wash:      rgba(217, 164, 65, 0.12);
+  --clay:            #C4563A;   /* unavailable / destructive only            */
+  --clay-wash:       rgba(196, 86, 58, 0.14);
+
+  /* --- Court surfaces (per sport, used by the SVG court plans) ------------ */
+  --surf-pickleball: #0E5C63;
+  --surf-padel:      #12435E;
+  --surf-badminton:  #8A5A2B;
+  --surf-tabletennis:#14406B;
+  --surf-basketball: #9A6224;
+  --surf-football:   #1E5B2E;
+
+  /* --- Lines ------------------------------------------------------------- */
+  --line:            rgba(232, 235, 226, 0.14);
+  --line-strong:     rgba(232, 235, 226, 0.30);
+  --line-ink:        rgba(10, 36, 32, 0.16);
+  --line-ink-strong: rgba(10, 36, 32, 0.32);
+
+  /* --- Type -------------------------------------------------------------- */
+  --font: "Archivo", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+
+  --fs-display:  clamp(2.7rem, 7vw, 6.5rem);
+  --fs-title:    clamp(2.2rem, 5.4vw, 4.4rem);
+  --fs-h2:       clamp(1.9rem, 3.9vw, 3.1rem);
+  --fs-h3:       clamp(1.28rem, 2.05vw, 1.65rem);
+  --fs-h4:       clamp(1.02rem, 1.35vw, 1.16rem);
+  --fs-body:     1.0625rem;
+  --fs-lede:     clamp(1.05rem, 1.3vw, 1.28rem);
+  --fs-small:    0.875rem;
+  --fs-micro:    0.75rem;
+
+  --lh-tight: 0.92;
+  --lh-snug:  1.16;
+  --lh-body:  1.62;
+
+  --measure: 64ch;
+
+  /* --- Space (density 4/10 — standard marketing rhythm) ------------------- */
+  --s-1:  4px;
+  --s-2:  8px;
+  --s-3:  12px;
+  --s-4:  16px;
+  --s-5:  24px;
+  --s-6:  32px;
+  --s-7:  48px;
+  --s-8:  64px;
+  --s-9:  96px;
+  --s-10: 128px;
+
+  --gutter: clamp(20px, 5vw, 72px);
+  --maxw: 1440px;
+  --maxw-narrow: 980px;
+
+  /* --- Radii — courts are rectangles; corners stay near-square ------------ */
+  --r-xs: 2px;
+  --r-sm: 4px;
+  --r-md: 8px;
+  --r-lg: 14px;
+  --r-pill: 999px;
+
+  /* --- Motion ------------------------------------------------------------ */
+  --e-out:  cubic-bezier(0.16, 1, 0.3, 1);
+  --e-in:   cubic-bezier(0.7, 0, 0.84, 0);
+  --e-soft: cubic-bezier(0.4, 0, 0.2, 1);
+  --t-fast: 140ms;
+  --t-mid:  260ms;
+  --t-slow: 620ms;
+
+  /* --- Elevation — light comes from the rig above the court --------------- */
+  --lift-1: 0 1px 0 rgba(232,235,226,.06) inset, 0 12px 32px -18px rgba(0,0,0,.9);
+  --lift-2: 0 1px 0 rgba(232,235,226,.08) inset, 0 32px 72px -34px rgba(0,0,0,.95);
+  --lift-ink: 0 18px 44px -26px rgba(10,36,32,.42);
+
+  /* --- Availability semantics — booking, live bar, event slots ------------ */
+  --state-open:   var(--optic);
+  --state-tight:  var(--maple);
+  --state-closed: var(--clay);
+
+  --nav-h: 76px;
+}

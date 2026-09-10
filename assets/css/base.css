@@ -1,0 +1,251 @@
+/* ==========================================================================
+   TOSS CLUB — Reset, elements, layout scaffolding, utilities
+   ========================================================================== */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  scroll-padding-top: calc(var(--nav-h) + 16px);
+  /* Wide children that legitimately scroll inside their own container — the
+     comparison table, the stepper, the live strip — must never hand the page
+     a horizontal scrollbar. `clip` seals that axis without creating a scroll
+     container, so the fixed bar and every sticky column keep working. */
+  overflow-x: clip;
+}
+
+body {
+  margin: 0;
+  background: var(--pine);
+  color: var(--bone);
+  font-family: var(--font);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  /* No overflow-x here. The root clips that axis (see html above); setting
+     hidden on the body as well would stop it propagating to the viewport,
+     make the body its own scroll container, and break every sticky element
+     on the page — the story stage, the booking summary, the FAQ aside and
+     the comparison table's header. */
+}
+
+body.is-locked { overflow: hidden; }
+
+h1, h2, h3, h4, p, figure, blockquote, dl, dd, fieldset { margin: 0; }
+fieldset { border: 0; padding: 0; min-width: 0; }
+ul, ol { margin: 0; padding: 0; list-style: none; }
+img, svg, video, iframe { display: block; max-width: 100%; }
+img { height: auto; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { background: none; border: 0; padding: 0; cursor: pointer; }
+a { color: inherit; text-decoration: none; }
+table { border-collapse: collapse; width: 100%; }
+
+/* --- Display type --------------------------------------------------------
+   The width axis of Archivo carries the athletic voice: display is wide,
+   like lettering across a jersey. Body stays at normal width to read well.
+   -------------------------------------------------------------------------- */
+
+.display {
+  font-size: var(--fs-display);
+  font-weight: 800;
+  font-stretch: 118%;
+  font-variation-settings: "wdth" 118, "wght" 800;
+  line-height: var(--lh-tight);
+  letter-spacing: -0.024em;
+  text-transform: uppercase;
+}
+
+.title {
+  font-size: var(--fs-title);
+  font-weight: 800;
+  font-stretch: 112%;
+  font-variation-settings: "wdth" 112, "wght" 800;
+  line-height: var(--lh-snug);
+  letter-spacing: -0.02em;
+}
+
+h2, .h2 {
+  font-size: var(--fs-h2);
+  font-weight: 800;
+  font-stretch: 110%;
+  font-variation-settings: "wdth" 110, "wght" 800;
+  line-height: 1.04;
+  letter-spacing: -0.022em;
+}
+
+h3, .h3 {
+  font-size: var(--fs-h3);
+  font-weight: 700;
+  font-stretch: 104%;
+  font-variation-settings: "wdth" 104, "wght" 700;
+  line-height: 1.2;
+  letter-spacing: -0.014em;
+}
+
+h4, .h4 {
+  font-size: var(--fs-h4);
+  font-weight: 600;
+  line-height: 1.32;
+  letter-spacing: -0.006em;
+}
+
+.lede {
+  font-size: var(--fs-lede);
+  line-height: 1.55;
+  color: var(--ash);
+  max-width: var(--measure);
+}
+
+.prose { max-width: var(--measure); color: var(--ash); }
+.prose + .prose { margin-top: var(--s-4); }
+.small { font-size: var(--fs-small); line-height: 1.5; }
+.micro { font-size: var(--fs-micro); line-height: 1.45; }
+.num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+.dim { color: var(--ash-dim); }
+.section--light .dim { color: var(--slate); }
+
+/* --- Layout scaffolding -------------------------------------------------- */
+
+.wrap {
+  width: 100%;
+  max-width: var(--maxw);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.wrap--narrow { max-width: var(--maxw-narrow); }
+
+.section {
+  position: relative;
+  padding-block: clamp(72px, 8.5vw, 148px);
+}
+
+.section--light {
+  background: var(--chalk);
+  color: var(--ink);
+}
+.section--light .lede,
+.section--light .prose { color: var(--slate); }
+
+.section--sunk { background: var(--pine-deep); }
+
+/* Grid items default to min-width:auto, so one wide child — a stepper, a
+   table — pushes the whole column past the viewport. Every layout grid on
+   this page opts out. */
+.booking__layout > *,
+.sports__grid > *,
+.community__grid > *,
+.visit__grid > *,
+.faq__layout > *,
+.ladder,
+.booking__main { min-width: 0; }
+
+/* Section heading — the rule is a court baseline, drawn in on reveal. */
+.section__head {
+  display: grid;
+  gap: var(--s-5);
+  margin-bottom: clamp(40px, 5vw, 72px);
+}
+
+.section__rule {
+  height: 1px;
+  width: 100%;
+  background: var(--line-strong);
+  transform-origin: left center;
+  transform: scaleX(0);
+  transition: transform 900ms var(--e-out);
+}
+.section--light .section__rule { background: var(--line-ink-strong); }
+.is-in .section__rule { transform: scaleX(1); }
+
+.section__meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-5);
+  flex-wrap: wrap;
+  font-size: var(--fs-small);
+  color: var(--ash-dim);
+}
+.section--light .section__meta { color: var(--slate); }
+
+@media (min-width: 940px) {
+  .section__head--split {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    align-items: end;
+    column-gap: var(--s-8);
+  }
+  .section__head--split .section__rule,
+  .section__head--split .section__meta { grid-column: 1 / -1; }
+}
+
+/* --- Focus, skip link, screen-reader ------------------------------------- */
+
+:focus-visible {
+  outline: 2px solid var(--optic);
+  outline-offset: 3px;
+  border-radius: var(--r-xs);
+}
+.section--light :focus-visible { outline-color: var(--ink); }
+
+.skip {
+  position: fixed;
+  left: var(--s-4);
+  top: -120px;
+  z-index: 300;
+  background: var(--optic);
+  color: var(--pine);
+  padding: var(--s-3) var(--s-5);
+  border-radius: var(--r-sm);
+  font-weight: 700;
+  transition: top var(--t-mid) var(--e-out);
+}
+.skip:focus { top: var(--s-4); }
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0);
+  white-space: nowrap; border: 0;
+}
+
+/* --- Reveal — content settles after its baseline is drawn ---------------- */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 620ms var(--e-out), transform 620ms var(--e-out);
+}
+.is-in .reveal, .reveal.is-in { opacity: 1; transform: none; }
+.is-in .reveal[data-delay="1"] { transition-delay: 80ms; }
+.is-in .reveal[data-delay="2"] { transition-delay: 160ms; }
+.is-in .reveal[data-delay="3"] { transition-delay: 240ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .reveal { opacity: 1; transform: none; }
+  .section__rule { transform: scaleX(1); }
+}
+
+/* --- Shared texture — keeps the dark grounds from banding ---------------- */
+
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.3;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='0.5'/></svg>");
+}
