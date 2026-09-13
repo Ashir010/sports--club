@@ -1,0 +1,31 @@
+:root {
+  --bg: #F4EFE7;
+  --text-primary: #2C2924;
+  --text-body: #5F5A51;
+  --accent: #B86F4B;
+  --accent-hover: #D18A61;
+  --dim: #777168;
+  --border-subtle: rgba(74, 63, 51, 0.16);
+  --cream: #E8DDCC;
+  --olive: #69705A;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #F4EFE7;
+  color: #2C2924;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  font-weight: 300;
+}
+
+::selection {
+  background: rgba(184, 111, 75, 0.22);
+  color: #2C2924;
+}

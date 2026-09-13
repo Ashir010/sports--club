@@ -234,7 +234,7 @@ html.lenis::-webkit-scrollbar { display: none; }
 .story__step.is-live { opacity: 1; }
 
 .story__name {
-  font-size: clamp(2.1rem, 5vw, 3.6rem);
+  font-size: clamp(2.1rem, 2.1rem + 0.0230769 * (100vw - 400px), 3.6rem);
   font-weight: 800;
   font-stretch: 116%;
   font-variation-settings: "wdth" 116, "wght" 800;
@@ -278,7 +278,7 @@ html.lenis::-webkit-scrollbar { display: none; }
 @media (min-width: 1024px) {
   .story__grid {
     grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
-    column-gap: clamp(40px, 5vw, 88px);
+    column-gap: clamp(2.5rem, 2.5rem + 0.0461538 * (100vw - 400px), 5.5rem);
     align-items: stretch;
   }
   .story__stage { top: calc(var(--nav-h) + 32px); }
@@ -339,17 +339,16 @@ html.lenis::-webkit-scrollbar { display: none; }
 }
 .cursorlabel.is-on { opacity: 1; scale: 1; }
 
-@media (pointer: coarse), (prefers-reduced-motion: reduce) {
+@media (pointer: coarse) {
   .cursorlabel { display: none; }
 }
+html.motion-reduced .cursorlabel { display: none; }
 
 /* --------------------------------------------------------------------------
    Reduced motion — no inertia, no drift, nothing masked.
    -------------------------------------------------------------------------- */
 
-@media (prefers-reduced-motion: reduce) {
-  .unmask { clip-path: none !important; transition: none !important; }
-  .plate__art { transform: none; }
-  .story__step { opacity: 1; }
-  .story__layer { transition: none; }
-}
+html.motion-reduced .unmask { clip-path: none !important; transition: none !important; }
+html.motion-reduced .plate__art { transform: none; }
+html.motion-reduced .story__step { opacity: 1; }
+html.motion-reduced .story__layer { transition: none; }

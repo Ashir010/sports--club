@@ -121,7 +121,7 @@ h4, .h4 {
 
 .section {
   position: relative;
-  padding-block: clamp(72px, 8.5vw, 148px);
+  padding-block: clamp(4.5rem, 4.5rem + 0.0730769 * (100vw - 400px), 9.25rem);
 }
 
 .section--light {
@@ -148,7 +148,7 @@ h4, .h4 {
 .section__head {
   display: grid;
   gap: var(--s-5);
-  margin-bottom: clamp(40px, 5vw, 72px);
+  margin-bottom: clamp(2.5rem, 2.5rem + 0.0307692 * (100vw - 400px), 4.5rem);
 }
 
 .section__rule {
@@ -226,16 +226,21 @@ h4, .h4 {
 .is-in .reveal[data-delay="2"] { transition-delay: 160ms; }
 .is-in .reveal[data-delay="3"] { transition-delay: 240ms; }
 
-@media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  *, *::before, *::after {
-    animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
-  }
-  .reveal { opacity: 1; transform: none; }
-  .section__rule { transform: scaleX(1); }
+/* Motion is decided in one place — see assets/js/lib/dom.js — and published
+   as `motion-reduced` on <html> by the inline script in the page head, so the
+   stylesheet and the scripts can never disagree. Keying off the media query
+   directly here would ignore the `data-motion` override and leave the page
+   half animated: JS scrubbing while every CSS transition is dead. */
+html.motion-reduced { scroll-behavior: auto; }
+html.motion-reduced *,
+html.motion-reduced *::before,
+html.motion-reduced *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
 }
+html.motion-reduced .reveal { opacity: 1; transform: none; }
+html.motion-reduced .section__rule { transform: scaleX(1); }
 
 /* --- Shared texture — keeps the dark grounds from banding ---------------- */
 

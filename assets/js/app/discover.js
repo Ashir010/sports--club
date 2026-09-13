@@ -1,7 +1,7 @@
 /* ==========================================================================
    TOSS CLUB — Discovery views
-   Hero (live courts + rotating court plan), sports selector, facilities,
-   gallery.
+   Live availability, the sports story, facilities, gallery. The cover and
+   the chapters above them live in prologue.js.
    ========================================================================== */
 
 window.TOSS = window.TOSS || {};
@@ -12,58 +12,6 @@ window.TOSS = window.TOSS || {};
   var d = TOSS.dom;
   var $ = d.$, $$ = d.$$, el = d.el;
   var api = TOSS.api;
-
-  /* ======================================================================
-     HERO
-     ====================================================================== */
-
-  function initHero() {
-    var plate = $("#heroPlate");
-    var nameOut = $("#heroPlateName");
-    var dotsOut = $("#heroDots");
-    var timer = null;
-    var index = 0;
-
-    if (!plate) return;
-
-    function show(i, announce) {
-      index = (i + TOSS.sports.length) % TOSS.sports.length;
-      var sport = TOSS.sports[index];
-      TOSS.court.paint(plate, sport.plan, sport.surface,
-        plate.dataset.photoBase ? plate.dataset.photoBase + sport.id + ".jpg" : "",
-        sport.name + " court at Toss Club");
-      if (nameOut) nameOut.textContent = sport.name;
-      $$(".hero__dot", dotsOut).forEach(function (dot, di) {
-        dot.classList.toggle("is-on", di === index);
-        dot.setAttribute("aria-selected", String(di === index));
-      });
-      if (announce && nameOut) nameOut.setAttribute("aria-live", "polite");
-    }
-
-    if (dotsOut) {
-      TOSS.sports.forEach(function (sport, i) {
-        dotsOut.appendChild(el("button", {
-          class: "hero__dot", type: "button", role: "tab",
-          "aria-label": "Show the " + sport.name + " court",
-          onclick: function () { stop(); show(i, true); }
-        }));
-      });
-    }
-
-    function stop() { if (timer) { clearInterval(timer); timer = null; } }
-
-    show(0);
-
-    if (!d.reducedMotion.matches) {
-      timer = setInterval(function () {
-        if (document.hidden) return;
-        show(index + 1);
-      }, 5200);
-      document.addEventListener("visibilitychange", function () {
-        if (document.hidden) stop();
-      });
-    }
-  }
 
   /* --- Live availability strip ------------------------------------------ */
 
@@ -352,7 +300,6 @@ window.TOSS = window.TOSS || {};
   }
 
   TOSS.discover = {
-    initHero: initHero,
     initLiveBar: initLiveBar,
     initSports: initSports,
     initFacilities: initFacilities,

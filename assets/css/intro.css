@@ -1,0 +1,164 @@
+/* ==========================================================================
+   TOSS CLUB — The intro page
+   --------------------------------------------------------------------------
+   intro.html deliberately does not load base.css. That file carries the
+   reset, the element styles and the layout scaffolding for the whole site,
+   and this page has one section, one panel and a skip link. What it needs is
+   below; what it shares with the site comes from tokens.css.
+   ========================================================================== */
+
+html {
+  -webkit-text-size-adjust: 100%;
+  /* No `scroll-behavior: smooth` here. Lenis owns the scrolling on this
+     page, and the two fight: the native smoothing animates the same
+     scrollTop Lenis is interpolating, and the scrub stutters. */
+  overflow-x: clip;
+}
+
+body {
+  margin: 0;
+  background: var(--pine);
+  color: var(--bone);
+  font-family: var(--font);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+svg { display: block; }
+
+/* The same pairing assets/css/motion.css applies to the site. Lenis is
+   driving the scroll here, so the native scrollbar is redundant — but the
+   reason it matters on this page is the handoff: home.html hides its
+   scrollbar and this page did not, so the two differed by 15px and the
+   layout jumped sideways at precisely the moment the crossfade is meant to
+   be holding still. Both pages hide it, or neither; they must agree.
+
+   Scoped to .lenis, exactly as motion.css is, so a visitor with reduced
+   motion — who gets no Lenis on either page — keeps a real scrollbar on
+   both. */
+html.lenis { scrollbar-width: none; }
+html.lenis::-webkit-scrollbar { display: none; }
+
+/* --- Skip --------------------------------------------------------------- */
+/* Visible from the start, not only on focus. An intro nobody can get out of
+   is the single most irritating thing this pattern does, and a repeat
+   visitor should never have to scroll four screens to reach the site. */
+
+.intro__skip {
+  position: fixed;
+  top: clamp(1rem, 1rem + 0.0153846 * (100vw - 400px), 2rem);
+  right: clamp(1rem, 1rem + 0.0153846 * (100vw - 400px), 2rem);
+  z-index: 30;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.6rem 1.1rem;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  background: rgba(6, 32, 28, 0.55);
+  backdrop-filter: blur(10px);
+  color: var(--bone);
+  font-size: var(--fs-micro);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: border-color var(--t-mid) var(--e-soft),
+              background var(--t-mid) var(--e-soft);
+}
+
+.intro__skip:hover,
+.intro__skip:focus-visible {
+  border-color: var(--optic);
+  background: rgba(6, 32, 28, 0.85);
+}
+
+.intro__skip:focus-visible {
+  outline: 2px solid var(--optic);
+  outline-offset: 3px;
+}
+
+/* --- The handoff panel --------------------------------------------------- */
+
+.intro__outro {
+  position: relative;
+  z-index: 2;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: var(--s-7) var(--gutter);
+  background: var(--pine);
+  text-align: center;
+}
+
+.intro__outro-inner {
+  display: grid;
+  justify-items: center;
+  gap: var(--s-4);
+}
+
+.intro__mark {
+  width: clamp(2.5rem, 2.5rem + 0.0230769 * (100vw - 400px), 4rem);
+  color: var(--optic);
+}
+
+.intro__word {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-title);
+  line-height: var(--lh-tight);
+  letter-spacing: -0.01em;
+}
+
+.intro__line {
+  margin: 0;
+  max-width: 38ch;
+  color: var(--ash);
+  font-size: var(--fs-lede);
+}
+
+.intro__enter {
+  margin-top: var(--s-4);
+  display: inline-flex;
+  align-items: center;
+  padding: 0.85rem 1.8rem;
+  border-radius: var(--r-pill);
+  background: var(--optic);
+  color: var(--pine);
+  font-size: var(--fs-small);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  transition: background var(--t-mid) var(--e-soft);
+}
+
+.intro__enter:hover { background: var(--optic-deep); }
+
+.intro__enter:focus-visible {
+  outline: 2px solid var(--bone);
+  outline-offset: 3px;
+}
+
+/* --- The exit wash ------------------------------------------------------- */
+/* Both pages sit on --pine, so fading to it means the navigation lands on a
+   ground that is already the right colour rather than flashing white. */
+
+.intro__exit {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: var(--pine);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 500ms var(--e-soft);
+}
+
+.intro__exit.is-on {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+html.motion-reduced .intro__exit { transition: none; }
+html.motion-reduced .intro__skip,
+html.motion-reduced .intro__enter { transition: none; }

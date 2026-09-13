@@ -1,0 +1,442 @@
+/* ==========================================================================
+   TOSS CLUB — The prologue
+   --------------------------------------------------------------------------
+   The front page is read as a cover and three chapters of a single day:
+   the courts at 06:10, the hall at 17:40, the rig at 21:20. Each chapter is
+   a sticky frame inside a taller shell, so the pin is done by CSS position:
+   sticky and the only thing JavaScript contributes is how far through the
+   shell you are — `--t`, 0 to 1 — plus `--f`, which holds at 1 across the
+   middle of the chapter and falls away at both ends.
+
+   With JavaScript off, --t and --f are never set. Every rule below falls
+   back to a readable end state through its own var() default, so the page
+   reads as ordinary stacked sections with nothing hidden.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Shared — the shell / frame pair every scene is built from.
+   -------------------------------------------------------------------------- */
+
+.scene { position: relative; }
+
+.scene__frame {
+  position: sticky;
+  top: 0;
+  min-height: 100svh;
+  display: grid;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* The court drawing behind a scene. Oversized, so the scrubbed scale never
+   walks an edge into view. */
+.scene__bg {
+  position: absolute;
+  inset: -6%;
+  z-index: 0;
+  pointer-events: none;
+}
+/* This layer is driven by --t, so it opts out of the generic drift. */
+.scene__bg .plate__art { transform: none; }
+
+.scene__body { position: relative; z-index: 3; }
+
+/* --------------------------------------------------------------------------
+   Cover — a held screen. One line, one way in.
+   -------------------------------------------------------------------------- */
+
+.cover { height: 165vh; }
+
+.cover__frame {
+  background: var(--pine);
+  align-content: center;
+  justify-items: center;
+  text-align: center;
+  padding-block: calc(var(--nav-h) + var(--s-7)) var(--s-8);
+}
+
+.cover__art-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Two layers, so one sport dissolves into the next without a blink. */
+.cover__art {
+  position: absolute;
+  inset: -10%;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 900ms var(--e-soft);
+  transform: scale(calc(1 + var(--t, 0) * 0.26));
+  will-change: transform;
+}
+.cover__art.is-on { opacity: 1; }
+
+.cover__wash {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(72% 58% at 50% 42%, rgba(6,32,28,.18), rgba(4,24,21,.88) 78%),
+    linear-gradient(to bottom, rgba(6,32,28,.74), rgba(6,32,28,.10) 30%, rgba(4,24,21,.94));
+}
+
+/* The light rig, drifting up out of frame as the cover is left behind. */
+.cover__rig {
+  position: absolute;
+  inset: -24% -12% auto -12%;
+  height: 96%;
+  z-index: 2;
+  pointer-events: none;
+  filter: blur(10px);
+  background:
+    radial-gradient(56% 44% at 26% 6%, rgba(216,242,75,.16), transparent 68%),
+    radial-gradient(44% 38% at 80% 0%, rgba(217,164,65,.13), transparent 70%);
+  transform: translate3d(0, calc(var(--t, 0) * -12vh), 0);
+}
+
+.cover__body {
+  display: grid;
+  justify-items: center;
+  gap: clamp(1.5rem, 1.5rem + 0.0153846 * (100vw - 400px), 2.5rem);
+  /* A measure in rem, not ch: a ch here would be resolved against the body
+     size and squeeze the motto, which is set five times larger. */
+  width: 100%;
+  max-width: 54rem;
+  padding-inline: var(--gutter);
+  transform: translate3d(0, calc(var(--t, 0) * -9vh), 0);
+  opacity: calc(1 - var(--t, 0) * 1.05);
+  will-change: transform;
+}
+
+/* The motto. Bodoni appears here and nowhere small — at this size the
+   hairlines hold against the dark ground. */
+.cover__motto {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-size: clamp(2.35rem, 2.35rem + 0.0776923 * (100vw - 400px), 7.4rem);
+  line-height: 0.94;
+  text-wrap: balance;
+  letter-spacing: -0.028em;
+  color: var(--bone);
+  /* The arrival. A pure CSS animation rather than the scroll-driven mask,
+     so the headline is never hidden behind JavaScript that failed to run;
+     the global reduced-motion rule collapses it to the finished state. */
+  animation: unveil 1150ms var(--e-out) 120ms both;
+}
+/* The second clause turns in the italic. It is half the sentence, not a
+   highlighted word, and it keeps the same colour as the first half. */
+.cover__motto em {
+  display: block;
+  font-style: italic;
+}
+@keyframes unveil {
+  from { clip-path: inset(0 0 102% 0); }
+  to   { clip-path: inset(0 0 -2% 0); }
+}
+
+.cover__sub {
+  max-width: 46ch;
+  font-size: var(--fs-small);
+  line-height: 1.65;
+  color: var(--ash);
+}
+.cover__sub b { color: var(--bone); font-weight: 600; }
+
+/* Scroll cue — a line that fills, the same gesture as the chapter rail. */
+.cover__cue {
+  position: absolute;
+  z-index: 3;
+  left: 50%;
+  bottom: clamp(1.25rem, 1.25rem + 0.0134615 * (100vw - 400px), 2.125rem);
+  transform: translateX(-50%);
+  display: grid;
+  justify-items: center;
+  gap: var(--s-3);
+  font-size: var(--fs-micro);
+  color: var(--ash-dim);
+  opacity: calc(1 - var(--t, 0) * 4);
+  pointer-events: none;
+}
+.cover__cueline {
+  width: 1px;
+  height: 44px;
+  background: var(--line);
+  overflow: hidden;
+}
+.cover__cueline::after {
+  content: "";
+  display: block;
+  width: 1px;
+  height: 100%;
+  background: var(--optic);
+  animation: cue 2.4s var(--e-soft) infinite;
+}
+@keyframes cue {
+  0%   { transform: translateY(-100%); }
+  55%  { transform: translateY(0); }
+  100% { transform: translateY(100%); }
+}
+
+/* Which court plan is on screen, named quietly in the corner. */
+.cover__plan {
+  position: absolute;
+  z-index: 3;
+  left: var(--gutter);
+  bottom: clamp(1.25rem, 1.25rem + 0.0134615 * (100vw - 400px), 2.125rem);
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  font-size: var(--fs-micro);
+  color: var(--ash-dim);
+  opacity: calc(1 - var(--t, 0) * 4);
+}
+.cover__planname {
+  font-weight: 700;
+  font-stretch: 112%;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--bone);
+}
+
+@media (max-width: 640px) {
+  .cover__plan { display: none; }
+}
+
+/* Below the two-column breakpoint the copy runs the full width, so a veil
+   that clears one side has nothing to clear. It becomes an even scrim
+   instead, and the drawing steps back to stay behind the text. */
+@media (max-width: 899px) {
+  .chapter__veil,
+  .chapter--right .chapter__veil {
+    background: linear-gradient(
+      to bottom,
+      var(--chapter-ground),
+      color-mix(in srgb, var(--chapter-ground) 80%, transparent) 24%,
+      color-mix(in srgb, var(--chapter-ground) 80%, transparent) 76%,
+      var(--chapter-ground));
+  }
+  .chapter__bg { opacity: 0.55; }
+  .chapter--light .chapter__bg { opacity: 0.3; }
+}
+
+/* --------------------------------------------------------------------------
+   Chapters
+   -------------------------------------------------------------------------- */
+
+.chapter { height: 190vh; }
+
+.chapter__frame {
+  --chapter-ground: var(--pine);
+  --chapter-fg: var(--bone);
+  --chapter-dim: var(--ash);
+  --chapter-faint: var(--ash-dim);
+  --chapter-line: var(--line);
+  background: var(--chapter-ground);
+  color: var(--chapter-fg);
+  padding-block: calc(var(--nav-h) + var(--s-7)) var(--s-8);
+  align-content: center;
+}
+
+/* The hall is lit. Chapter II cuts to the chalk ground and the whole frame
+   inverts with it. */
+.chapter--light .chapter__frame {
+  --chapter-ground: var(--chalk);
+  --chapter-fg: var(--ink);
+  --chapter-dim: var(--slate);
+  --chapter-faint: var(--slate);
+  --chapter-line: var(--line-ink);
+}
+
+.chapter__bg {
+  opacity: 0.78;
+  transform: scale(calc(1.2 - var(--t, 0) * 0.2));
+  will-change: transform;
+}
+.chapter--light .chapter__bg { opacity: 0.4; }
+
+.chapter__veil {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(to right,
+      var(--chapter-ground) 0 20%,
+      color-mix(in srgb, var(--chapter-ground) 88%, transparent) 44%,
+      rgba(0,0,0,0) 78%),
+    linear-gradient(to bottom, var(--chapter-ground), rgba(0,0,0,0) 26%, rgba(0,0,0,0) 68%, var(--chapter-ground));
+}
+.chapter--right .chapter__veil {
+  background:
+    linear-gradient(to left,
+      var(--chapter-ground) 0 20%,
+      color-mix(in srgb, var(--chapter-ground) 88%, transparent) 44%,
+      rgba(0,0,0,0) 78%),
+    linear-gradient(to bottom, var(--chapter-ground), rgba(0,0,0,0) 26%, rgba(0,0,0,0) 68%, var(--chapter-ground));
+}
+
+.chapter__body {
+  display: grid;
+  gap: clamp(1.125rem, 1.125rem + 0.0076923 * (100vw - 400px), 1.625rem);
+  max-width: 34rem;
+  opacity: var(--f, 1);
+  /* Two movements in one transform: the arrival, and a slow rise against
+     the backdrop settling behind it. The --t default of 0.5 means the
+     drift is zero when nothing is driving it. */
+  transform: translate3d(0, calc(
+    (1 - var(--f, 1)) * 26px + (0.5 - var(--t, 0.5)) * 46px
+  ), 0);
+  will-change: transform;
+}
+
+/* Numeral and hour are one unit: which chapter, and what time of day it is. */
+.chapter__mark {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-4);
+  border-bottom: 1px solid var(--chapter-line);
+  padding-bottom: var(--s-3);
+}
+.chapter__num {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  font-size: clamp(1.9rem, 1.9rem + 0.0123077 * (100vw - 400px), 2.7rem);
+  line-height: 1;
+  color: var(--optic);
+}
+.chapter--light .chapter__num { color: var(--ink); }
+.chapter__time {
+  font-size: var(--fs-small);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--chapter-faint);
+}
+.chapter__where {
+  margin-left: auto;
+  font-size: var(--fs-micro);
+  color: var(--chapter-faint);
+}
+
+.chapter__title {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-size: clamp(2.7rem, 2.7rem + 0.0507692 * (100vw - 400px), 6rem);
+  line-height: 0.92;
+  letter-spacing: -0.03em;
+  color: var(--chapter-fg);
+}
+.chapter__title em { font-style: italic; }
+
+.chapter__copy {
+  font-size: var(--fs-lede);
+  line-height: 1.58;
+  max-width: 44ch;
+  color: var(--chapter-dim);
+}
+
+.chapter__facts {
+  display: grid;
+  margin-top: var(--s-2);
+  border-top: 1px solid var(--chapter-line);
+}
+.chapter__fact {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--s-4);
+  align-items: baseline;
+  padding: var(--s-3) 0;
+  border-bottom: 1px solid var(--chapter-line);
+  font-size: var(--fs-small);
+}
+.chapter__fact dt { color: var(--chapter-faint); }
+.chapter__fact dd {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--chapter-fg);
+}
+
+.chapter__go { margin-top: var(--s-3); justify-self: start; }
+
+@media (min-width: 900px) {
+  .chapter__grid { display: grid; grid-template-columns: repeat(12, 1fr); }
+  .chapter__body { grid-column: 1 / span 6; }
+  .chapter--right .chapter__body { grid-column: 7 / span 6; }
+}
+
+/* --------------------------------------------------------------------------
+   Chapter bookmark — where you are in the day. Sits over the prologue only,
+   then hands back to the section rail once the story is done.
+   -------------------------------------------------------------------------- */
+
+.bookmark {
+  position: fixed;
+  z-index: 112;
+  left: var(--gutter);
+  bottom: clamp(1.25rem, 1.25rem + 0.0134615 * (100vw - 400px), 2.125rem);
+  display: none;
+  align-items: center;
+  gap: var(--s-3);
+  font-size: var(--fs-micro);
+  color: var(--ash-dim);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity var(--t-mid) var(--e-soft), transform var(--t-mid) var(--e-out);
+}
+.bookmark.is-on { opacity: 1; transform: none; }
+.bookmark__num {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  font-size: 1.05rem;
+  color: var(--optic);
+}
+.bookmark__name { font-weight: 600; color: var(--bone); }
+.bookmark.is-onlight { color: var(--slate); }
+.bookmark.is-onlight .bookmark__num,
+.bookmark.is-onlight .bookmark__name { color: var(--ink); }
+
+@media (min-width: 900px) and (pointer: fine) {
+  .bookmark { display: flex; }
+}
+
+/* --------------------------------------------------------------------------
+   Right now — the story hands over to the live club.
+   -------------------------------------------------------------------------- */
+
+.now { padding-block: clamp(3.5rem, 3.5rem + 0.0346154 * (100vw - 400px), 5.75rem); }
+
+.now__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--s-4);
+  margin-bottom: var(--s-5);
+}
+
+/* --------------------------------------------------------------------------
+   Reduced motion — the pin and the scrub both go. Chapters become ordinary
+   stacked sections at their natural height, fully legible, nothing hidden.
+   -------------------------------------------------------------------------- */
+
+html.motion-reduced .cover,
+html.motion-reduced .chapter { height: auto; }
+html.motion-reduced .scene__frame { position: static; min-height: 0; padding-block: clamp(4rem, 4rem + 0.0538462 * (100vw - 400px), 7.5rem); }
+html.motion-reduced .cover__frame { min-height: 86svh; }
+html.motion-reduced .cover__art,
+html.motion-reduced .chapter__bg,
+html.motion-reduced .cover__body,
+html.motion-reduced .cover__rig { transform: none; }
+html.motion-reduced .cover__body { opacity: 1; }
+html.motion-reduced .chapter__body { opacity: 1; transform: none; }
+html.motion-reduced .cover__cueline::after { animation: none; }
+html.motion-reduced .bookmark { display: none; }

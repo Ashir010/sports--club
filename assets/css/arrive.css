@@ -1,0 +1,44 @@
+/* ==========================================================================
+   TOSS CLUB — Arrival
+   --------------------------------------------------------------------------
+   The receiving half of the intro's exit fade. The intro fades out to --pine
+   and this page fades up from the same --pine, so what a visitor sees across
+   the navigation is one continuous ground rather than two pages cutting.
+
+   The element only exists for that handoff. On a direct visit it is removed
+   before it can ever paint (assets/js/app/arrive.js), so nobody who typed the
+   address is made to wait behind a curtain for the sake of a transition they
+   are not arriving from.
+   ========================================================================== */
+
+.arrive {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--pine);
+  pointer-events: none;
+
+  /* Opaque by default. The stylesheet is what holds the page behind the wash
+     during the navigation, not a script — a script cannot run early enough to
+     stop the first frame showing through. */
+  opacity: 1;
+
+  /* Slightly longer than the intro's 500ms exit, and eased out, so the lift
+     is slowest where it is most visible. */
+  transition: opacity 620ms var(--e-out);
+}
+
+/* Set by arrive.js once the page has painted. */
+.arrive.is-off { opacity: 0; }
+
+/* Nothing left to cover, and a fixed full-screen layer left in the tree would
+   otherwise keep taking a compositor layer for the life of the page. */
+.arrive.is-gone { display: none; }
+
+/* A visitor who asked for less motion gets no wash at all: it is pure
+   decoration, and the one thing worse than a hard cut is a slow one you did
+   not want. Keyed off the class the page head stamps, so the `data-motion`
+   override reaches this rule too. */
+html.motion-reduced .arrive {
+  display: none;
+}

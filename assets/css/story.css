@@ -1,0 +1,217 @@
+/* ==========================================================================
+   TOSS CLUB — Story devices
+   --------------------------------------------------------------------------
+   The language the prologue speaks, carried through the rest of the page:
+   the held statement, the looping name bands, the vertical scroll cue, the
+   chapter index, and the display voice on every section heading.
+
+   These sit around the working sections rather than replacing them. A
+   booking flow pinned like a chapter would look the part and be unusable,
+   so the story frames the tools; it does not become them.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Display voice — Bodoni everywhere a section announces itself.
+   -------------------------------------------------------------------------- */
+
+.section__head h2,
+.faq__title,
+.statement__line,
+.index__name,
+.footer__motto span {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-stretch: normal;
+  font-variation-settings: normal;
+  letter-spacing: -0.026em;
+}
+
+.section__head h2 {
+  font-size: clamp(2.4rem, 2.4rem + 0.0338462 * (100vw - 400px), 4.6rem);
+  line-height: 0.94;
+}
+
+/* --------------------------------------------------------------------------
+   Marquee — a section says its own name, over and over, on a hairline band.
+   Two identical runs sit side by side and the pair is translated leftward;
+   when the first run has fully left, the offset resets by exactly one run
+   and the seam never shows.
+   -------------------------------------------------------------------------- */
+
+.marquee {
+  position: relative;
+  overflow: hidden;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding-block: clamp(0.625rem, 0.625rem + 0.0076923 * (100vw - 400px), 1.125rem);
+  margin-bottom: clamp(2.5rem, 2.5rem + 0.0346154 * (100vw - 400px), 4.75rem);
+  user-select: none;
+}
+.section--light .marquee { border-color: var(--line-ink); }
+
+.marquee__track {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+}
+
+.marquee__run {
+  display: flex;
+  align-items: center;
+  flex: none;
+}
+
+.marquee__word {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-size: clamp(1.7rem, 1.7rem + 0.0230769 * (100vw - 400px), 3.2rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  color: var(--bone);
+}
+.section--light .marquee__word,
+.chapter--light .marquee__word { color: var(--ink); }
+
+/* The separator is the ball: the one thing every sport here has in common. */
+.marquee__dot {
+  flex: none;
+  width: clamp(0.4375rem, 0.4375rem + 0.0028846 * (100vw - 400px), 0.625rem);
+  height: clamp(0.4375rem, 0.4375rem + 0.0028846 * (100vw - 400px), 0.625rem);
+  margin-inline: clamp(1.125rem, 1.125rem + 0.0173077 * (100vw - 400px), 2.25rem);
+  border-radius: 50%;
+  background: var(--optic);
+}
+.section--light .marquee__dot { background: var(--ink); }
+
+/* A marquee that cannot move says the name once and stops. */
+html.motion-reduced .marquee__track { transform: none !important; }
+html.motion-reduced .marquee__run + .marquee__run { display: none; }
+
+/* --------------------------------------------------------------------------
+   Statement — one line, held on its own screen. The turn between the cover
+   and the first chapter.
+   -------------------------------------------------------------------------- */
+
+.statement {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 78svh;
+  padding: clamp(4.5rem, 4.5rem + 0.0846154 * (100vw - 400px), 10rem) var(--gutter);
+  background: var(--pine-deep);
+  text-align: center;
+}
+
+.statement__line {
+  max-width: 18ch;
+  font-size: clamp(2rem, 2rem + 0.04 * (100vw - 400px), 4.6rem);
+  line-height: 1.02;
+  color: var(--bone);
+}
+.statement__line em {
+  display: block;
+  font-style: italic;
+  color: var(--ash);
+}
+
+/* --------------------------------------------------------------------------
+   Vertical scroll cue — the word set one letter per line, as on the cover
+   of the reference. Six letters, so the DOM cost is nothing.
+   -------------------------------------------------------------------------- */
+
+.vcue {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+.vcue span { display: block; }
+
+/* --------------------------------------------------------------------------
+   The index — the three chapters, listed. A recap of the story and a way
+   back into any part of it.
+   -------------------------------------------------------------------------- */
+
+.index {
+  background: var(--pine-deep);
+  padding-block: clamp(4rem, 4rem + 0.0615385 * (100vw - 400px), 8rem);
+}
+
+.index__motto {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(1.8rem, 1.8rem + 0.0215385 * (100vw - 400px), 3.2rem);
+  line-height: 1.04;
+  letter-spacing: -0.026em;
+  color: var(--bone);
+  max-width: 18ch;
+  margin-bottom: clamp(2.25rem, 2.25rem + 0.0269231 * (100vw - 400px), 4rem);
+}
+.index__motto em { font-style: italic; color: var(--optic); }
+
+.index__list { border-top: 1px solid var(--line); }
+
+.index__row {
+  display: grid;
+  grid-template-columns: 3rem minmax(0, 1fr) auto;
+  gap: var(--s-4);
+  align-items: baseline;
+  padding: clamp(1.125rem, 1.125rem + 0.0115385 * (100vw - 400px), 1.875rem) 0;
+  border-bottom: 1px solid var(--line);
+  transition: border-color var(--t-fast) var(--e-soft);
+}
+.index__row:hover { border-bottom-color: var(--line-strong); }
+.index__row:hover .index__name { color: var(--optic); }
+
+.index__num {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  font-size: 1.3rem;
+  color: var(--ash);
+}
+.index__name {
+  font-size: clamp(1.6rem, 1.6rem + 0.0184615 * (100vw - 400px), 2.8rem);
+  line-height: 1.05;
+  color: var(--bone);
+  transition: color var(--t-fast) var(--e-soft);
+}
+.index__time {
+  font-size: var(--fs-small);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--ash-dim);
+}
+
+@media (max-width: 620px) {
+  .index__row { grid-template-columns: 2.2rem minmax(0, 1fr); }
+  .index__time { grid-column: 2; }
+}
+
+/* --------------------------------------------------------------------------
+   Footer motto — the sentence split across the foot of the page, the way
+   the reference hangs its own across the two clubs.
+   -------------------------------------------------------------------------- */
+
+.footer__motto {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--s-4);
+  padding-bottom: clamp(2.25rem, 2.25rem + 0.0346154 * (100vw - 400px), 4.5rem);
+  margin-bottom: clamp(2.25rem, 2.25rem + 0.0346154 * (100vw - 400px), 4.5rem);
+  border-bottom: 1px solid var(--line);
+}
+.footer__motto span {
+  font-size: clamp(2.1rem, 2.1rem + 0.0538462 * (100vw - 400px), 5.6rem);
+  line-height: 0.96;
+  color: var(--bone);
+}
+.footer__motto span:last-child { font-style: italic; color: var(--optic); }

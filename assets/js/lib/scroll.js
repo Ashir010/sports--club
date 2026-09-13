@@ -85,7 +85,14 @@ window.TOSS = window.TOSS || {};
   /* Chapter rail                                                           */
   /* ---------------------------------------------------------------------- */
 
-  var rail = { root: null, fill: null, dots: [], targets: [] };
+  /* `boxes` and `max` are measured geometry, refreshed on resize and by
+     refresh(). They exist because updateRail used to read offsetTop and
+     offsetHeight off every target on every frame — and did it twice, in two
+     separate loops, after updateScenes had already written to the scenes.
+     A read after a write forces the browser to lay the page out again
+     synchronously, so the rail alone was costing ~33 forced layouts per
+     frame. Same reasoning as the parallax cache below. */
+  var rail = { root: null, fill: null, dots: [], targets: [], boxes: [], max: 1 };
 
   function buildRail() {
     var host = $("#railnav");
@@ -114,30 +121,43 @@ window.TOSS = window.TOSS || {};
     });
   }
 
-  function updateRail(y) {
+  function measureRail() {
     if (!rail.root) return;
+    rail.max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+    rail.boxes = rail.targets.map(function (node) {
+      var r = node.getBoundingClientRect();
+      return {
+        top: r.top + window.scrollY,
+        h: r.height,
+        light: node.classList.contains("section--light")
+      };
+    });
+  }
 
-    var max = document.documentElement.scrollHeight - window.innerHeight;
-    rail.fill.style.setProperty("--p", max > 0 ? Math.min(y / max, 1) : 0);
+  /* Pure arithmetic over the cached boxes, plus writes. No layout is read
+     here, so this can run after updateScenes without forcing a reflow. */
+  function updateRail(y) {
+    if (!rail.root || !rail.boxes.length) return;
+
+    rail.fill.style.setProperty("--p", Math.min(y / rail.max, 1));
 
     var mid = y + window.innerHeight / 2;
     var active = -1;
-    rail.targets.forEach(function (node, i) {
-      var top = node.offsetTop;
-      if (mid >= top && mid < top + node.offsetHeight) active = i;
-    });
-    rail.dots.forEach(function (dot, i) {
-      dot.classList.toggle("is-on", i === active);
-    });
-
-    /* Invert the rail over a chalk chapter so it stays legible. */
     var onLight = false;
-    for (var i = 0; i < rail.targets.length; i++) {
-      var n = rail.targets[i];
-      if (mid >= n.offsetTop && mid < n.offsetTop + n.offsetHeight) {
-        onLight = n.classList.contains("section--light");
+
+    /* One pass, not two: the active dot and the light-ground test were
+       walking the same list looking for the same thing. */
+    for (var i = 0; i < rail.boxes.length; i++) {
+      var b = rail.boxes[i];
+      if (mid >= b.top && mid < b.top + b.h) {
+        active = i;
+        onLight = b.light;
         break;
       }
+    }
+
+    for (var j = 0; j < rail.dots.length; j++) {
+      rail.dots[j].classList.toggle("is-on", j === active);
     }
     rail.root.classList.toggle("is-onlight", onLight);
   }
@@ -154,8 +174,9 @@ window.TOSS = window.TOSS || {};
     layers = $$(".plate__art").filter(function (node) {
       /* Skip anything whose position on screen is not a function of how far
          the page has scrolled: the sticky story stage, the rotating hero
-         plate, and the lightbox. */
-      return !node.closest(".story__stage, .hero__plate, .lightbox");
+         plate, the lightbox, and the pinned prologue backdrops, which are
+         scrubbed against their own scene progress instead. */
+      return !node.closest(".story__stage, .hero__plate, .lightbox, .scene__bg");
     }).map(function (node) {
       var box = node.parentElement || node;
       var r = box.getBoundingClientRect();
@@ -236,6 +257,89 @@ window.TOSS = window.TOSS || {};
   }
 
   /* ---------------------------------------------------------------------- */
+  /* Scenes — the pinned chapters of the prologue                           */
+  /* ---------------------------------------------------------------------- */
+  /* A scene is a tall shell wrapped around a sticky frame. CSS does the
+     pinning; all this contributes is how far through the shell the page has
+     scrolled, published on the shell as two custom properties:
+
+       --t  0 to 1 across the whole travel, for anything continuous —
+            a scale, a drift, a fade-out.
+       --f  the arrival: 0 while the frame is still sliding up into place,
+            1 by the time it is pinned, and 1 from then on.
+
+     --f deliberately has no fall. A chapter that faded out before its
+     frame released left the pin holding an empty screen for most of a
+     viewport; letting the text stay lit and physically slide away with its
+     own frame, while the next chapter slides in underneath, is both
+     shorter and a cleaner cut.
+
+     Neither is written under reduced motion, so the stylesheet's var()
+     fallbacks render the finished state and the shells collapse to their
+     natural height. */
+
+  var scenes = [];
+
+  function collectScenes() {
+    scenes = $$(".scene").map(function (node) {
+      return {
+        node: node,
+        frame: $(".scene__frame", node),
+        top: 0,
+        travel: 1,
+        t: -1,
+        f: -1
+      };
+    });
+  }
+
+  function measureScenes() {
+    var vh = window.innerHeight;
+    scenes.forEach(function (s) {
+      var r = s.node.getBoundingClientRect();
+      s.top = r.top + window.scrollY;
+      var frameH = s.frame ? s.frame.offsetHeight : vh;
+      /* The sticky frame is parked for exactly the height the shell has
+         over and above the frame itself. That distance is the travel. */
+      s.travel = Math.max(1, r.height - frameH);
+    });
+  }
+
+  function clamp01(n) { return n < 0 ? 0 : n > 1 ? 1 : n; }
+
+  function updateScenes(y) {
+    if (reduced || !scenes.length) return;
+
+    var live = null;
+
+    for (var i = 0; i < scenes.length; i++) {
+      var s = scenes[i];
+      var raw = (y - s.top) / s.travel;
+
+      /* Clamped rather than skipped. A scene the page has jumped clean over
+         — an anchor, a restored hash, a fast flick — still has to be left
+         holding its terminal value, or it keeps whatever it was showing
+         when it was last on screen. Writes only happen on a change, so a
+         settled scene costs nothing after the first frame. */
+      var t = clamp01(raw);
+      /* Lit a third of a screen before the frame settles, so a chapter is
+         already readable as it slides into place rather than appearing
+         once it has stopped. */
+      var f = clamp01((raw + 0.35) / 0.4);
+
+      t = Math.round(t * 1000) / 1000;
+      f = Math.round(f * 1000) / 1000;
+
+      if (t !== s.t) { s.t = t; s.node.style.setProperty("--t", t); }
+      if (f !== s.f) { s.f = f; s.node.style.setProperty("--f", f); }
+
+      if (raw >= 0 && raw <= 1 && !live) live = s;
+    }
+
+    if (TOSS.scroll.onScene) TOSS.scroll.onScene(live);
+  }
+
+  /* ---------------------------------------------------------------------- */
   /* Cursor label                                                           */
   /* ---------------------------------------------------------------------- */
 
@@ -275,18 +379,35 @@ window.TOSS = window.TOSS || {};
   /* ---------------------------------------------------------------------- */
 
   var lastY = -1;
+  var velY = 0;        /* pixels of scroll in the last frame, smoothed */
+  var velFrom = 0;
+  var lastTime = 0;
 
   function frame(time) {
     if (lenis) lenis.raf(time);
 
     var y = window.scrollY;
+    var dt = lastTime ? Math.min(time - lastTime, 64) : 16;
+    lastTime = time;
+
+    /* Smoothed so a single stuttering frame does not throw anything that
+       reads the velocity. */
+    velY += ((y - velFrom) - velY) * 0.25;
+    velFrom = y;
+
     if (y !== lastY) {
       lastY = y;
+      updateScenes(y);
       updateRail(y);
       updateParallax(y);
       updateUnmask(y);
       if (TOSS.scroll.onScroll) TOSS.scroll.onScroll(y);
     }
+
+    /* Anything that has to move every frame, scrolling or not — the name
+       bands, the cursor disc — runs here rather than starting a second
+       requestAnimationFrame loop of its own. */
+    if (TOSS.scroll.onFrame) TOSS.scroll.onFrame(dt, velY);
     if (TOSS.scroll._cursorFrame) TOSS.scroll._cursorFrame();
 
     requestAnimationFrame(frame);
@@ -297,7 +418,11 @@ window.TOSS = window.TOSS || {};
     buildRail();
     initAnchors();
     initCursor();
+    collectScenes();
+    measureScenes();
+    updateScenes(window.scrollY);
     measure();
+    measureRail();
     collectUnmask();
     updateUnmask(window.scrollY);
 
@@ -310,7 +435,9 @@ window.TOSS = window.TOSS || {};
     window.addEventListener("resize", function () {
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(function () {
+        measureScenes();
         measure();
+        measureRail();
         lastY = -1;
         if (lenis) lenis.resize();
       }, 180);
@@ -324,13 +451,20 @@ window.TOSS = window.TOSS || {};
     start: start,
     /* Call after any render that adds plates or unmaskable tiles. */
     refresh: function (root) {
+      measureScenes();
       measure();
+      measureRail();
       collectUnmask(root);
       updateUnmask(window.scrollY);
       lastY = -1;
     },
     get lenis() { return lenis; },
     reduced: reduced,
-    onScroll: null
+    onScroll: null,
+    /* Called with the scene currently under the pin, or null between them. */
+    onScene: null,
+    /* Called every frame with (deltaMs, scrollVelocity), for motion that
+       continues whether or not the page is being scrolled. */
+    onFrame: null
   };
 })();

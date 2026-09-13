@@ -1,0 +1,14 @@
+{
+  "name": "toss-club",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Toss Club — six sports, one club. A static site with no build step.",
+  "scripts": {
+    "start": "node scripts/dev.mjs",
+    "serve": "npx --yes http-server -p 8777 -c-1 ."
+  },
+  "keywords": [
+    "static-site"
+  ],
+  "license": "UNLICENSED"
+}

@@ -48,13 +48,40 @@
   --font: "Archivo", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
           Helvetica, Arial, sans-serif;
 
-  --fs-display:  clamp(2.7rem, 7vw, 6.5rem);
-  --fs-title:    clamp(2.2rem, 5.4vw, 4.4rem);
-  --fs-h2:       clamp(1.9rem, 3.9vw, 3.1rem);
-  --fs-h3:       clamp(1.28rem, 2.05vw, 1.65rem);
-  --fs-h4:       clamp(1.02rem, 1.35vw, 1.16rem);
+  /* The prologue speaks in the voice of an honours board: a high-contrast
+     didone, engraved rather than printed. Display sizes only — below about
+     2rem the hairlines thin out and it stops being readable on pine. */
+  --font-display: "Bodoni Moda", "Didot", "Bodoni MT", Georgia, serif;
+
+  /* Fluid scale, interpolated between two fixed viewports rather than tied
+     to raw vw:
+
+         clamp(MIN, MIN + SLOPE * (100vw - 400px), MAX)
+
+     where SLOPE = (MAX - MIN, in rem) x 16 / 1040. A step is exactly MIN at
+     a 400px viewport, exactly MAX at 1440px, and moves linearly between, so
+     both ends land on a size someone chose rather than wherever `7vw`
+     happened to fall. Above 1440px the root font-size takes over instead
+     (see the end of this block) and carries the whole scale up together.
+
+     SLOPE is a plain number multiplying a length. It must never become a
+     length multiplied by a length -- calc rejects that outright and drops
+     the whole declaration with it, silently. To retune a step, set MIN and
+     MAX and recompute SLOPE. */
+
+  --fs-display:  clamp(2.7rem,  2.7rem  + 0.0584615 * (100vw - 400px), 6.5rem);
+  --fs-title:    clamp(2.2rem,  2.2rem  + 0.0338462 * (100vw - 400px), 4.4rem);
+  --fs-h2:       clamp(1.9rem,  1.9rem  + 0.0184615 * (100vw - 400px), 3.1rem);
+  --fs-h3:       clamp(1.28rem, 1.28rem + 0.0056923 * (100vw - 400px), 1.65rem);
+  --fs-h4:       clamp(1.02rem, 1.02rem + 0.0021538 * (100vw - 400px), 1.16rem);
+  --fs-lede:     clamp(1.05rem, 1.05rem + 0.0035385 * (100vw - 400px), 1.28rem);
+
+  /* Reading sizes stay put across the fluid range. Body copy that grows with
+     the window is the one thing this technique reliably gets wrong: the
+     measure is already held at 64ch, so scaling the glyphs too just trades a
+     comfortable line for a shorter one. These grow above 1440px with
+     everything else, and not before. */
   --fs-body:     1.0625rem;
-  --fs-lede:     clamp(1.05rem, 1.3vw, 1.28rem);
   --fs-small:    0.875rem;
   --fs-micro:    0.75rem;
 
@@ -65,20 +92,27 @@
   --measure: 64ch;
 
   /* --- Space (density 4/10 — standard marketing rhythm) ------------------- */
-  --s-1:  4px;
-  --s-2:  8px;
-  --s-3:  12px;
-  --s-4:  16px;
-  --s-5:  24px;
-  --s-6:  32px;
-  --s-7:  48px;
-  --s-8:  64px;
-  --s-9:  96px;
-  --s-10: 128px;
+  /* In rem, not px, so the rhythm scales with the root above 1440px instead
+     of staying at phone spacing on a 27-inch monitor. Identical to the old
+     pixel values at the default 16px root: 0.25rem is 4px, 8rem is 128px. */
+  --s-1:  0.25rem;
+  --s-2:  0.5rem;
+  --s-3:  0.75rem;
+  --s-4:  1rem;
+  --s-5:  1.5rem;
+  --s-6:  2rem;
+  --s-7:  3rem;
+  --s-8:  4rem;
+  --s-9:  6rem;
+  --s-10: 8rem;
 
-  --gutter: clamp(20px, 5vw, 72px);
-  --maxw: 1440px;
-  --maxw-narrow: 980px;
+  --gutter: clamp(1.25rem, 1.25rem + 0.05 * (100vw - 400px), 4.5rem);
+
+  /* Also rem, so the measure grows with the type it holds. A container fixed
+     at 1440px while the text inside it scales up would only crowd the lines
+     together, which is the opposite of what the root scaling is for. */
+  --maxw: 90rem;
+  --maxw-narrow: 61.25rem;
 
   /* --- Radii — courts are rectangles; corners stay near-square ------------ */
   --r-xs: 2px;
@@ -105,5 +139,26 @@
   --state-tight:  var(--maple);
   --state-closed: var(--clay);
 
+  /* Stays in px. scroll.js reads this with parseInt to offset anchor jumps
+     under the fixed bar, and parseInt("4.75rem") is 4. */
   --nav-h: 76px;
+}
+
+/* --------------------------------------------------------------------------
+   Root scaling above the fluid range
+   --------------------------------------------------------------------------
+   Past 1440px the type scale has hit its ceiling, so growth moves to the
+   root instead: every rem on the page — type, spacing, container widths —
+   grows together, and the design keeps its proportions on a large monitor
+   rather than stranding a phone-sized column in the middle of it.
+
+   1rem at 1440px, 1.3rem at 2560px. Below 1440 the middle term goes
+   negative and clamp floors it at 1rem, so this needs no media query.
+
+   `rem` inside the root's own font-size resolves against the initial 16px,
+   not against this declaration, so there is no circularity here.
+   -------------------------------------------------------------------------- */
+
+:root {
+  font-size: clamp(1rem, 1rem + 0.0042857 * (100vw - 1440px), 1.3rem);
 }

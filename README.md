@@ -12,11 +12,21 @@ No build step, no dependencies. Open it and it runs.
 ## Running it
 
 ```bash
-npx http-server -p 8777 -c-1 .
-# then open http://127.0.0.1:8777/
+npm start
 ```
 
-Opening `index.html` directly from disk also works — the scripts are classic
+That starts the static server on port 8777, waits until it is actually
+answering, and then opens the site in Chrome. The wait matters: launching the
+browser at the same moment as the server lands on a connection-refused page
+often enough to be annoying.
+
+There is nothing to install first. `package.json` has no dependencies — the
+launcher (`scripts/dev.mjs`) pulls `http-server` through `npx` on demand, and
+falls back to the machine's default browser if Chrome is not installed where
+it usually lives. `PORT=3000 npm start` moves the port. `npm run serve` starts
+the same server without opening anything.
+
+Opening the files directly from disk also works — the scripts are classic
 `<script>` tags, not modules — but the OpenStreetMap embed on the Visit section
 needs `http://` to load.
 
@@ -25,12 +35,19 @@ needs `http://` to load.
 ## How it is put together
 
 ```
-index.html                  Page structure. Every section is independent.
+index.html                  The intro. A scroll-scrubbed court tunnel, drawn
+                            on a canvas, that hands off to home.html at the end.
+home.html                   The site. Every section is independent.
+scripts/dev.mjs             Dev server: serves, waits, opens Chrome.
 assets/css/
   tokens.css                Colour, type, space, motion. The only file with raw values.
   base.css                  Reset, type scale, layout scaffolding, reveal + reduced motion.
   components.css            Buttons, chips, availability states, fields, nav, court plates.
   sections.css              One block per section, in page order.
+  prologue.css              The cover and the three chapters of the front page.
+  story.css                 Name bands, statement, chapter index, footer motto.
+  intro.css                 The intro page: skip link, handoff panel, exit wash.
+  gate.css                  The intro's drawn sequence: the pinned stage and its type.
 assets/js/
   data/catalog.js           Club details, six sports, courts, facilities, gallery.
   data/programs.js          Memberships, events, coaching programmes, coaches.
@@ -39,7 +56,11 @@ assets/js/
   lib/dom.js                Small DOM helpers, money formatting, icons, toasts.
   lib/courts.js             Generates the court drawings as SVG.
   app/ui.js                 Nav, drawer, scroll progress, reveals, counters, lightbox.
-  app/discover.js           Hero, live availability, sports selector, facilities, gallery.
+  app/prologue.js           The cover and its chapter backdrops.
+  app/story.js              The looping name bands and the vertical scroll cue.
+  app/gate.js               The intro sequence, drawn rather than filmed.
+  app/intro.js              The intro page: smooth scroll, frame loop, handoff.
+  app/discover.js           Live availability, sports selector, facilities, gallery.
   app/booking.js            The booking flow.
   app/programs.js           Memberships, events, coaching.
   app/community.js          Matchmaking, leaderboards, groups, reviews, FAQ, visit.
@@ -47,17 +68,66 @@ assets/js/
 ```
 
 Each view checks for its container and does nothing if it is absent, so
-sections can be removed or reordered in `index.html` without breaking others.
+sections can be removed or reordered in `home.html` without breaking others.
 
 ---
 
+## The front page
+
+The front page is a cinematic prologue, modelled on collabcapitolium.fr: a
+held cover, then one day at the club in three chapters — the outdoor courts at
+06:10, the indoor hall at 17:40, the rig at 21:20 — before the live
+availability strip hands over to the working sections below.
+
+- The cover is filled edge to edge by the club's own court plans, cycling
+  through all six sports and dilating as it is scrolled away. The motto is set
+  in Bodoni Moda, which appears here and in the chapter titles and nowhere
+  else; below about 2rem its hairlines stop holding on the pine ground.
+- Chapter II cuts to the chalk ground. The tonal break is the point: the hall
+  is lit, and a prologue that stayed dark throughout would read as one flat
+  page rather than three places.
+- The numbering is chronological, not decorative — the timestamps are the
+  club's real hours, and the chapters run in the order the day does.
+
+Each chapter is a tall shell wrapped around a sticky frame, so **CSS does the
+pinning**. The scroll loop only publishes how far through the shell the page
+has scrolled, as two custom properties on the shell: `--t`, 0 to 1 across the
+travel, for scales and drifts; and `--f`, the arrival, which reaches 1 by the
+time the frame settles and stays there. `--f` deliberately never falls — a
+chapter that faded out before its frame released left the pin holding an empty
+screen, so the text stays lit and slides away with its own frame while the
+next chapter arrives underneath.
+
+## The rest of the page
+
+The same language runs to the foot of the page, so the site reads as one
+piece rather than a cinematic front page bolted to an ordinary one.
+
+- **Name bands.** Every section announces itself on a looping hairline band,
+  the ball as the separator. A section asks for one by naming itself in
+  markup — `<section data-marquee="Facilities">` — so the band is never a
+  second copy of the heading that can drift out of sync with it. The band
+  carries the section's short name and the heading beneath it says something
+  else; three of them repeated their own heading at first, and adjacent
+  duplication at that size reads as a bug rather than a device.
+- **The statement** between the cover and the first chapter: one line, held.
+- **The index** after the chapters: the three of them listed with their
+  hours, as a recap and a way back into any part of the story.
+- **The footer motto** hangs the cover's sentence across the foot of the page.
+- **Bodoni** carries every section heading, not just the prologue's.
+
+The working sections keep their working UI inside that frame. A booking flow
+pinned like a chapter would look the part and be unusable, so the story
+frames the tools rather than becoming them.
+
 ## Scroll
 
-The scroll feel is modelled on collabcapitolium.fr, which turned out to be
-Lenis smooth scrolling with no animation library behind it. All of it lives in
-`assets/css/motion.css` and `assets/js/lib/scroll.js`, and it is entirely
-additive — with JavaScript off, or reduced motion requested, the page falls
-back to ordinary native scrolling with nothing hidden.
+The scroll feel is Lenis smooth scrolling with no animation library behind it.
+All of it lives in `assets/css/motion.css`, `assets/css/prologue.css` and
+`assets/js/lib/scroll.js`, and it is entirely additive — with JavaScript off,
+or reduced motion requested, the page falls back to ordinary native scrolling
+with nothing hidden. Under reduced motion the shells collapse to their natural
+height and the chapters become plain stacked sections.
 
 - **Lenis** (vendored locally at `assets/js/vendor/lenis.min.js`, no CDN) gives
   the inertial, long-settling scroll. Anchors, the chapter rail and every
@@ -68,14 +138,22 @@ back to ordinary native scrolling with nothing hidden.
 - **Unmask** — tiles are revealed by lifting a `clip-path` from the bottom
   edge rather than sliding up, so frames stay put and only the picture arrives.
 - **Parallax** — the court drawing drifts inside its frame as the frame passes.
+- **Scenes** — the pinned cover and chapters, scrubbed through `--t` / `--f`
+  as described above. Scenes are clamped rather than skipped when off screen,
+  so one the page has jumped clean over still settles on its end value.
 - **Sports story** — a court holds still on the left while the six chapters
   pass on the right, redrawing as each takes over. Below 1024px the stage is
   dropped and every chapter carries its own court.
 - **Cursor label** — a disc naming the action over openable media, on fine
   pointers only.
+- **Name bands** — two identical runs side by side, the pair translated
+  leftward, reset by exactly one run width when the first has left, so the
+  seam never shows. Speed is a constant drift plus the scroll velocity, and
+  the band never reverses, so the reading direction stays stable however the
+  page is moved.
 
-One frame loop drives the smoothing, the rail, the parallax and the unmasking;
-nothing else listens to `scroll`.
+One frame loop drives the smoothing, the scenes, the rail, the parallax and
+the unmasking; nothing else listens to `scroll`.
 
 Two implementation notes worth keeping:
 
@@ -105,13 +183,12 @@ a missing file leaves the drawing in place rather than a broken image.
 
 1. Put files in `assets/img/`.
 2. Set the `data-photo-base` attribute on the relevant container in
-   `index.html` to `assets/img/`.
+   `home.html` to `assets/img/`.
 
 The filename each container looks for:
 
 | Container | Attribute location | Files it looks for |
 |---|---|---|
-| Hero | `#heroPlate` | `pickleball.jpg`, `padel.jpg`, `badminton.jpg`, `table-tennis.jpg`, `basketball.jpg`, `football.jpg` |
 | Sports panel | `#sportPlate` | same six sport ids |
 | Facilities | `#facGrid` | `fac-padel.jpg`, `fac-pickle.jpg`, … (the `id` of each entry in `TOSS.facilities`) |
 | Gallery | `#galleryGrid` | `g1.jpg` … `g10.jpg` |

@@ -12,7 +12,8 @@
     TOSS.community.initClubFacts();
 
     TOSS.ui.initNav();
-    TOSS.discover.initHero();
+    TOSS.prologue.init();
+    TOSS.story.init();
     TOSS.discover.initLiveBar();
     TOSS.discover.initSports();
     TOSS.discover.initFacilities();

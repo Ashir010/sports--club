@@ -1,0 +1,140 @@
+/* ==========================================================================
+   TOSS CLUB — Scroll-linked image sequence
+   --------------------------------------------------------------------------
+   The pinning here is CSS and nothing else: a tall shell, a sticky child one
+   screen high. JavaScript only decides which frame goes on the canvas.
+
+   Note for anyone adding an ancestor around .seq — `position: sticky` is
+   measured against the nearest scrolling ancestor, so an `overflow: hidden`
+   anywhere up the tree silently kills the pin. The root of this site uses
+   `overflow-x: clip` for exactly that reason; `clip` seals the axis without
+   creating a scroll container.
+   ========================================================================== */
+
+.seq {
+  position: relative;
+  /* Written by the component from data-seq-travel. The fallback keeps the
+     section usable if the stylesheet is loaded without the script. */
+  height: var(--seq-travel, 400vh);
+  background: var(--pine);
+}
+
+.seq__sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  /* 100dvh where it is supported, so the mobile address bar collapsing does
+     not leave a strip of pine below the frame. */
+  height: 100dvh;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.seq__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* The canvas is sized in device pixels by the script and drawn cover-fit,
+     so it must not be scaled again here. */
+  opacity: 0;
+  transition: opacity .5s var(--e-soft);
+}
+
+.seq.is-ready .seq__canvas { opacity: 1; }
+
+/* --- Loading state -------------------------------------------------------- */
+
+.seq__loader {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  color: var(--ash);
+  font-size: var(--fs-micro, .78rem);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  transition: opacity .4s ease;
+}
+
+.seq.is-ready .seq__loader,
+.seq--failed .seq__loader {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.seq__bar {
+  width: min(220px, 46vw);
+  height: 2px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.seq__barfill {
+  display: block;
+  height: 100%;
+  background: var(--optic);
+  /* --p is 0–1, written by the script. transform rather than width so the
+     progress bar never lays out. */
+  transform: scaleX(var(--p, 0));
+  transform-origin: left center;
+  transition: transform .2s linear;
+}
+
+/* --- Reduced motion ------------------------------------------------------- */
+/* One frame, one screen. The shell collapses so the page does not ask
+   anybody to scroll four screens past a picture that will not change. */
+
+.seq--still {
+  height: 100vh;
+  height: 100dvh;
+}
+
+.seq--still .seq__sticky { position: relative; }
+
+/* --- Failure -------------------------------------------------------------- */
+/* No frames arrived. Take the empty scroll back rather than leave four
+   screens of pine between two sections. */
+
+.seq--failed { height: 0; }
+.seq--failed .seq__sticky { display: none; }
+
+html.motion-reduced .seq__canvas,
+html.motion-reduced .seq__barfill { transition: none; }
+
+/* --- Page chrome over the sequence ---------------------------------------- */
+/* These frames arrive with a logo across the top and captions along the
+   bottom, baked into the picture. The site's own fixed nav landing on top of
+   that reads as two identities fighting over the same corner, so the chrome
+   steps aside while the sequence owns the screen and comes back the moment
+   it does not. Toggled from an IntersectionObserver in sequence.js.
+
+   The skip link is deliberately not faded — keyboard users keep it. */
+
+html.seq-cover .nav,
+html.seq-cover .progress,
+html.seq-cover .railnav {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .45s var(--e-soft);
+}
+
+.nav,
+.progress,
+.railnav { transition: opacity .45s var(--e-soft); }
+
+/* Someone tabbing into the nav while it is hidden must still see it. */
+html.seq-cover .nav:focus-within {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+html.motion-reduced.seq-cover .nav,
+html.motion-reduced.seq-cover .progress,
+html.motion-reduced.seq-cover .railnav,
+html.motion-reduced .nav,
+html.motion-reduced .progress,
+html.motion-reduced .railnav { transition: none; }

@@ -282,7 +282,7 @@
   flex-direction: column;
   justify-content: flex-end;
   height: 100%;
-  padding: clamp(18px, 2.4vw, 30px);
+  padding: clamp(1.125rem, 1.125rem + 0.0115385 * (100vw - 400px), 1.875rem);
   gap: var(--s-3);
 }
 

@@ -1,0 +1,8 @@
+node_modules
+.next
+next-env.d.ts
+tsconfig.tsbuildinfo
+frames/
+public/frames/
+public/hero.mp4
+hero.mp4

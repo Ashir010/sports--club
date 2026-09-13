@@ -119,7 +119,38 @@ window.TOSS = window.TOSS || {};
     return function () { container.removeEventListener("keydown", onKey); };
   }
 
-  var reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  /* The OS motion preference, with one documented override.
+     --------------------------------------------------------------------
+     Every animated module on the site reads this, so it is the single place
+     the decision is made. `data-motion` on <html> overrides it:
+
+         <html data-motion="always">    animate regardless of the OS setting
+         <html data-motion="reduce">    behave as though reduced was asked for
+         (absent)                       follow the OS, which is the default
+
+     "always" overrides a stated accessibility preference, and that is a real
+     trade — a visitor who turns animation off at the OS level is usually
+     doing it for a reason. It exists because the setting is easy to have on
+     without knowing: Windows enables it under Accessibility > Visual effects
+     > Animation effects, and with it on this site loses Lenis smoothing, the
+     parallax, the reveals and every scroll-scrubbed scene at once, which
+     reads as a broken page rather than a calm one.
+
+     Only `.matches` is read anywhere, but the listener methods are forwarded
+     so a caller can still subscribe to OS-level changes. */
+  var motionMQ = window.matchMedia("(prefers-reduced-motion: reduce)");
+  var motionForced = document.documentElement.getAttribute("data-motion");
+
+  var reducedMotion = {
+    get matches() {
+      if (motionForced === "always") return false;
+      if (motionForced === "reduce") return true;
+      return motionMQ.matches;
+    },
+    get media() { return motionMQ.media; },
+    addEventListener: function (t, fn) { motionMQ.addEventListener(t, fn); },
+    removeEventListener: function (t, fn) { motionMQ.removeEventListener(t, fn); }
+  };
 
   TOSS.dom = {
     $: $, $$: $$, el: el, clear: clear,

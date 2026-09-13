@@ -1,0 +1,323 @@
+/* ==========================================================================
+   TOSS CLUB — The gate
+   --------------------------------------------------------------------------
+   Layout for the drawn intro sequence. The pinning is CSS and nothing else:
+   a tall shell with a sticky child exactly one screen high. JavaScript only
+   decides what goes on the canvas and how far through its window each line
+   of type is.
+
+   Note for anyone adding an ancestor around .gate — `position: sticky` is
+   measured against the nearest scrolling ancestor, so an `overflow: hidden`
+   anywhere up the tree silently kills the pin. The root of this site uses
+   `overflow-x: clip` for exactly that reason; `clip` seals the axis without
+   creating a scroll container.
+   ========================================================================== */
+
+.gate {
+  position: relative;
+  /* Written by the component from data-gate-travel. The fallback keeps the
+     section usable if the stylesheet loads without the script. */
+  height: var(--gate-travel, 400vh);
+  background: var(--pine-deep);
+}
+
+.gate__stage {
+  position: sticky;
+  top: 0;
+  /* The pair matters. Mobile browsers report 100vh as the tallest the
+     viewport ever gets, so the address bar collapsing would otherwise leave
+     a strip of ground below the picture; dvh tracks the real box, and the
+     vh line keeps a browser without dvh support on something sane. */
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--pine-deep);
+}
+
+.gate__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* Sized in device pixels by the script and drawn to fill, so it must not
+     be scaled again here. */
+  opacity: 0;
+  transition: opacity .7s var(--e-soft);
+}
+
+.gate.is-ready .gate__canvas { opacity: 1; }
+
+/* --- Type ---------------------------------------------------------------- */
+/* The layer never fades as a whole and is never gated behind a ready state.
+   Each beat owns its own opacity, written by the component from the same
+   scroll progress that drives the canvas, so the words and the picture can
+   never disagree about where the page is. */
+
+.gate__type {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  padding: calc(var(--gutter) + 3.5rem) var(--gutter) calc(var(--gutter) + 2rem);
+  pointer-events: none;
+  text-align: center;
+}
+
+/* The scene brightens by a long way between the first beat and the last, and
+   the middle of the frame — where the type sits — is exactly where the light
+   at the end of the tunnel ends up. Text shadows alone were not enough to
+   hold secondary copy against it. This scrim sits between the canvas and the
+   words and is centred on the same place they are, so it darkens only the
+   ground under the text and leaves the corners of the composition alone.
+
+   It is deliberately not tied to any loading or ready state: if it ever
+   failed to appear the words would still be there, just harder to read. */
+.gate__type::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 62% 46% at 50% 50%,
+    rgba(4, 24, 21, 0.56) 0%,
+    rgba(4, 24, 21, 0.4) 42%,
+    rgba(4, 24, 21, 0.13) 68%,
+    transparent 84%
+  );
+}
+
+/* Every beat sits in the same cell, so they cross-fade through one another
+   instead of pushing the layout around. */
+.gate__beat {
+  grid-area: 1 / 1;
+  display: grid;
+  justify-items: center;
+  gap: var(--s-4);
+  max-width: min(46rem, 100%);
+  opacity: 0;
+  will-change: opacity, transform;
+}
+
+/* --- The opening beat's entrance ----------------------------------------- */
+/* This beat is already at full opacity at progress 0, because it is what
+   somebody sees before they have scrolled at all. Its arrival is played once
+   on load instead, and it is the beat's *children* that animate: the
+   component writes opacity and transform straight onto .gate__beat every
+   frame, and a CSS animation on the same element would win the cascade and
+   fight it. Animating one level down keeps the two entirely separate. */
+
+.gate__beat--first > * {
+  animation: gate-rise 1.1s var(--e-out) both;
+}
+
+.gate__beat--first > *:nth-child(1) { animation-delay: 0.16s; }
+.gate__beat--first > *:nth-child(2) { animation-delay: 0.26s; }
+.gate__beat--first > *:nth-child(3) { animation-delay: 0.38s; }
+.gate__beat--first > *:nth-child(4) { animation-delay: 0.52s; }
+
+@keyframes gate-rise {
+  from { opacity: 0; transform: translate3d(0, 26px, 0); }
+  to   { opacity: 1; transform: none; }
+}
+
+html.motion-reduced .gate__beat--first > * { animation: none; }
+
+.gate__kicker {
+  margin: 0;
+  color: var(--optic);
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  /* The scene behind is a moving gradient, so the type carries its own
+     contrast rather than relying on whatever frame it lands on. */
+  text-shadow: 0 1px 18px rgba(4, 24, 21, 0.9);
+}
+
+.gate__mark {
+  width: clamp(2.75rem, 2.75rem + 0.0269231 * (100vw - 400px), 4.5rem);
+  color: var(--optic);
+  filter: drop-shadow(0 6px 26px rgba(4, 24, 21, 0.75));
+}
+
+.gate__word {
+  margin: 0;
+  font-size: var(--fs-display);
+  font-weight: 700;
+  line-height: var(--lh-tight);
+  letter-spacing: -0.03em;
+  color: var(--bone);
+  text-shadow: 0 2px 40px rgba(4, 24, 21, 0.75);
+}
+
+.gate__line {
+  margin: 0;
+  max-width: 26ch;
+  color: var(--bone);
+  font-size: var(--fs-h3);
+  font-weight: 400;
+  line-height: var(--lh-snug);
+  letter-spacing: -0.01em;
+  text-shadow: 0 2px 28px rgba(4, 24, 21, 0.85);
+}
+
+.gate__sub {
+  margin: 0;
+  max-width: 34ch;
+  color: var(--ash);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  text-shadow: 0 1px 20px rgba(4, 24, 21, 0.9);
+}
+
+/* The count on the middle beats. Big, tabular, and paired with a label so it
+   reads as a fact about the club rather than as decoration. */
+.gate__figure {
+  margin: 0;
+  display: grid;
+  justify-items: center;
+  gap: var(--s-2);
+}
+
+.gate__num {
+  font-size: var(--fs-display);
+  font-weight: 800;
+  line-height: var(--lh-tight);
+  letter-spacing: -0.04em;
+  color: var(--bone);
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 2px 40px rgba(4, 24, 21, 0.8);
+}
+
+/* No punctuation in the figure. Archivo draws a square full stop, which at
+   display size renders as a solid block rather than as a period and reads as
+   a rendering fault. The accent belongs on the kicker above it instead. */
+
+/* --- The scroll cue ------------------------------------------------------ */
+
+.gate__cue {
+  display: grid;
+  justify-items: center;
+  gap: var(--s-3);
+  margin-top: var(--s-5);
+  color: var(--ash);
+  font-size: var(--fs-micro);
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+.gate__cue i {
+  display: block;
+  width: 1px;
+  height: 2.75rem;
+  background: linear-gradient(to bottom, transparent, var(--optic));
+  transform-origin: top center;
+  animation: gate-cue 2.4s var(--e-soft) infinite;
+}
+
+@keyframes gate-cue {
+  0%        { transform: scaleY(0); opacity: 0; }
+  35%       { transform: scaleY(1); opacity: 1; }
+  70%, 100% { transform: scaleY(1); opacity: 0; transform-origin: bottom center; }
+}
+
+/* --- The last beat's action ---------------------------------------------- */
+/* The type layer ignores pointer events so the page scrolls normally under
+   it; the one thing anybody is meant to click takes them back. */
+
+.gate__enter {
+  pointer-events: auto;
+  margin-top: var(--s-3);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.9rem 1.9rem;
+  border-radius: var(--r-pill);
+  background: var(--optic);
+  color: var(--pine);
+  font-size: var(--fs-small);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  box-shadow: 0 18px 44px -22px rgba(216, 242, 75, 0.7);
+  transition: background var(--t-mid) var(--e-soft),
+              transform var(--t-mid) var(--e-soft);
+}
+
+.gate__enter svg {
+  width: 1.05em;
+  height: 1.05em;
+  transition: transform var(--t-mid) var(--e-soft);
+}
+
+.gate__enter:hover { background: var(--optic-deep); transform: translateY(-2px); }
+.gate__enter:hover svg { transform: translateX(4px); }
+
+.gate__enter:focus-visible {
+  outline: 2px solid var(--bone);
+  outline-offset: 3px;
+}
+
+/* --- Narrow screens ------------------------------------------------------ */
+/* The stage is already fluid, but the display step is tuned for a headline
+   with room around it, and at phone widths the middle beats otherwise run
+   to three and four lines. */
+
+@media (max-width: 600px) {
+  .gate__type {
+    padding-left: max(var(--gutter), 1.25rem);
+    padding-right: max(var(--gutter), 1.25rem);
+  }
+
+  .gate__line { max-width: 20ch; font-size: var(--fs-h4); }
+  .gate__sub { max-width: 28ch; font-size: var(--fs-small); }
+  .gate__beat { gap: var(--s-3); }
+  .gate__cue { margin-top: var(--s-4); }
+  .gate__cue i { height: 2rem; }
+}
+
+/* A short landscape phone has no vertical room for a display headline and a
+   paragraph and a button, so the scale comes down rather than the block
+   overflowing the pinned screen. */
+@media (max-height: 520px) {
+  .gate__word, .gate__num { font-size: clamp(2rem, 7vh, 3rem); }
+  .gate__mark { width: 2.25rem; }
+  .gate__beat { gap: var(--s-2); }
+  .gate__cue { display: none; }
+}
+
+/* --- Reduced motion ------------------------------------------------------ */
+/* One screen, one composed picture, every word on it. Nobody is asked to
+   scroll four screens past something that will not change, and the beats
+   stop being animated — the component pins progress at a fixed point and
+   this puts the type back to a plain stack. */
+
+.gate--still { height: 100vh; height: 100dvh; }
+.gate--still .gate__stage { position: relative; }
+
+.gate--still .gate__type {
+  display: grid;
+  place-items: center;
+}
+
+.gate--still .gate__beat {
+  opacity: 1 !important;
+  transform: none !important;
+  visibility: visible !important;
+}
+
+/* Stacked rather than overlaid, since they are all on screen at once. */
+.gate--still .gate__beat { grid-area: auto; }
+.gate--still .gate__beat:not(:first-child):not(:last-child) { display: none; }
+
+/* Nothing to scroll to: the shell is one screen and the whole composition is
+   already on it. */
+.gate--still .gate__cue { display: none; }
+
+html.motion-reduced .gate__canvas,
+html.motion-reduced .gate__enter,
+html.motion-reduced .gate__enter svg { transition: none; }
+
+html.motion-reduced .gate__cue i { animation: none; opacity: 1; transform: none; }
